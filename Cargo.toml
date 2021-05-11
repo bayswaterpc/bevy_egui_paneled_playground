@@ -1,0 +1,13 @@
+[package]
+name = "bevy_egui_paneled_playground"
+version = "0.0.1"
+authors = ["jwilliams <bayswaterpc@gmail.com>"]
+description = "A set of examples for Egui Paneled app with integration into Bevy"
+license = "MIT"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = "0.5.0"
+bevy_egui="0.4.2"
