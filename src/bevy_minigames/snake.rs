@@ -366,7 +366,7 @@ fn food_timestep_system_set() -> SystemSet {
             FixedTimestep::step(1.0 as f64).chain(
                 (|In(input): In<ShouldRun>, state: Res<State<AppState>>| {
                     if state.current() == &AppState::Snake {
-                        input
+                        ShouldRun::Yes
                     } else {
                         ShouldRun::No
                     }
@@ -388,7 +388,8 @@ fn snake_state_shouldrun(state: Res<State<AppState>>) -> ShouldRun {
 //TODO figure this out
 //on_update may then be clashing
 fn post_update_system_set() -> SystemSet {
-    SystemSet::on_update(AppState::Snake)
+    SystemSet::new()
+    .with_run_criteria(snake_state_shouldrun.system())
     .with_system(position_translation.system())
     .with_system(size_scaling.system())
 }
@@ -410,7 +411,8 @@ pub fn add_snake(app: &mut AppBuilder) {
                 .system()
                 .label(SnakeMovement::Input)
                 .before(SnakeMovement::Movement))
-            .with_system(game_over.system().after(SnakeMovement::Movement))
+            .with_system(game_over.system()
+            .after(SnakeMovement::Movement))
         )
         .add_system_set(snake_timestep_system_set())
         .add_system_set(food_timestep_system_set())
@@ -418,19 +420,6 @@ pub fn add_snake(app: &mut AppBuilder) {
             CoreStage::PostUpdate,
             post_update_system_set(),
         )
-        // .add_system(
-        //     position_translation
-        //     .with_run_criteria(CoreStage::PostUpdate
-        //     .pipe(snake_state_shouldrun.system())
-        // )
-        // .add_system(
-        //     position_translation
-        //     .with_run_criteria("CoreStage::PostUpdate".pipe(snake_state_shouldrun.system()))
-        // )
-        // .add_system(
-        //     size_scaling
-        //     .with_run_criteria("CoreStage::PostUpdate".pipe(snake_state_shouldrun.system()))
-        // )
         .add_system_set(
             SystemSet::on_exit(AppState::Breakout)
             .with_system(game_state_teardown.system())
