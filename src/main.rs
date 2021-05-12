@@ -2,37 +2,24 @@ mod app_state;
 mod bevy_minigames;
 
 use bevy_egui::{egui, EguiContext, EguiPlugin};
-use bevy::{
-    prelude::*,
-};
+use bevy::{prelude::*};
 use crate::app_state::AppState;
 use crate::bevy_minigames::breakout::add_breakout_systems;
-
-
+use crate::bevy_minigames::contributors::add_contributors_systems;
 
 /// An implementation of the classic game "Breakout" with egui panels
 fn main() {
-    let mut app_builder = AppBuilder::default();
-    app_builder
+    let mut app = AppBuilder::default();
+    app
         .add_plugins(DefaultPlugins)
         .add_plugin(EguiPlugin)
         .add_state(AppState::CentralPanelState)
-        .add_startup_system(setup_cameras.system())
         .add_system(ui_egui.system());
 
-    add_breakout_systems(&mut app_builder);
-    
-    app_builder.run();
+    add_breakout_systems(&mut app);
+    add_contributors_systems(&mut app);
+    app.run();
 }
-
-
-
-fn setup_cameras(mut commands: Commands) {
-    // cameras
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    commands.spawn_bundle(UiCameraBundle::default());
-}
-
 
 fn ui_egui(
     mut app_state: ResMut<State<AppState>>,
@@ -46,8 +33,14 @@ fn ui_egui(
                 Err(e) => {println!("{:?}", e)},
             }
         }
-        if ui.button("Game Panel").clicked() {
-            match app_state.set(AppState::GameState) {
+        if ui.button("Breakout").clicked() {
+            match app_state.set(AppState::Breakout) {
+                Ok(_) => {},
+                Err(e) => {println!("{:?}", e)},
+            }
+        }
+        if ui.button("Contributors").clicked() {
+            match app_state.set(AppState::Contributors) {
                 Ok(_) => {},
                 Err(e) => {println!("{:?}", e)},
             }

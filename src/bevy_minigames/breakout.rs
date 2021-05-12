@@ -1,12 +1,12 @@
+//Adapted from bevy crates example breakout game
 use bevy::{
     prelude::*,
     core::FixedTimestep,
-
     sprite::collide_aabb::{collide, Collision},
-    render::{camera::Camera, pass::ClearColor}
+    render::{pass::ClearColor}
 };
 use bevy::ecs::schedule::ShouldRun;
-use crate::app_state::AppState;
+use crate::app_state::{game_state_teardown, AppState, PX_SIZE_OF_LEFT_PANEL};
 
 
 pub const TIME_STEP: f32 = 1.0 / 60.0;
@@ -16,16 +16,17 @@ pub fn add_breakout_systems( app: &mut AppBuilder) {
     app
     .insert_resource(Scoreboard { score: 0 })
     .insert_resource(ClearColor(Color::rgb(0.9, 0.9, 0.9)))
+    
     .add_system_set(
-        SystemSet::on_enter(AppState::GameState)
+        SystemSet::on_enter(AppState::Breakout)
             .with_system(setup_scene.system())
     )
-    .add_system_set( breakout_timestep_system_set())
+    .add_system_set( timestep_system_set())
     .add_system_set(
-        SystemSet::on_update(AppState::GameState)
+        SystemSet::on_update(AppState::Breakout)
             .with_system(scoreboard_system.system())
     )
-    .add_system_set(breakout_on_exit_system_set());
+    .add_system_set(on_exit_system_set());
 }
 
 struct Paddle {
@@ -46,9 +47,9 @@ enum Collider {
     Paddle,
 }
 
-fn breakout_on_exit_system_set() -> SystemSet {
-    SystemSet::on_exit(AppState::GameState)
-    .with_system(teardown.system())
+fn on_exit_system_set() -> SystemSet {
+    SystemSet::on_exit(AppState::Breakout)
+    .with_system(game_state_teardown.system())
     .with_system(reset_score.system())
 }
 
@@ -56,12 +57,18 @@ fn reset_score(mut scoreboard: ResMut<Scoreboard>){
     scoreboard.score = 0
 }
 
-// remove all entities that are not a camera
-fn teardown(mut commands: Commands, entities: Query<Entity, Without<Camera>>) {
-    for entity in entities.iter() {
-        commands.entity(entity).despawn_recursive();
-    }
+// // remove all entities that are not a camera
+// fn teardown(mut commands: Commands, entities: Query<Entity>) {
+//     for entity in entities.iter() {
+//         commands.entity(entity).despawn_recursive();
+//     }
+// }
 
+
+fn setup_cameras(commands: &mut Commands) {
+    // cameras
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(UiCameraBundle::default());
 }
 
 fn setup_scene(
@@ -69,6 +76,7 @@ fn setup_scene(
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
+    setup_cameras(&mut commands);
     // paddle
     commands
         .spawn_bundle(SpriteBundle {
@@ -117,7 +125,7 @@ fn setup_scene(
             position_type: PositionType::Absolute,
             position: Rect {
                 top: Val::Px(5.0),
-                left: Val::Px(5.0),
+                left: Val::Px(PX_SIZE_OF_LEFT_PANEL),
                 ..Default::default()
             },
             ..Default::default()
@@ -197,12 +205,12 @@ fn setup_scene(
     }
 }
 
-fn breakout_timestep_system_set() -> SystemSet {
+fn timestep_system_set() -> SystemSet {
     SystemSet::new()
         .with_run_criteria(
             FixedTimestep::step(TIME_STEP as f64).chain(
                 (|In(input): In<ShouldRun>, state: Res<State<AppState>>| {
-                    if state.current() == &AppState::GameState {
+                    if state.current() == &AppState::Breakout {
                         input
                     } else {
                         ShouldRun::No
