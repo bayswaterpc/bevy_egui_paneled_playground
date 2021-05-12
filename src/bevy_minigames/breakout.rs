@@ -1,32 +1,24 @@
 //Adapted from bevy crates example breakout game
-use bevy::{
-    prelude::*,
-    core::FixedTimestep,
-    sprite::collide_aabb::{collide, Collision},
-    render::{pass::ClearColor}
-};
-use bevy::ecs::schedule::ShouldRun;
 use crate::app_state::{game_state_teardown, AppState, PX_SIZE_OF_LEFT_PANEL};
-
+use bevy::ecs::schedule::ShouldRun;
+use bevy::{
+    core::FixedTimestep,
+    prelude::*,
+    render::pass::ClearColor,
+    sprite::collide_aabb::{collide, Collision},
+};
 
 pub const TIME_STEP: f32 = 1.0 / 60.0;
 /// An implementation of the classic game "Breakout" with egui panels
-pub fn add_breakout_systems( app: &mut AppBuilder) {
-
-    app
-    .insert_resource(Scoreboard { score: 0 })
-    .insert_resource(ClearColor(Color::rgb(0.9, 0.9, 0.9)))
-    
-    .add_system_set(
-        SystemSet::on_enter(AppState::Breakout)
-            .with_system(setup_scene.system())
-    )
-    .add_system_set( timestep_system_set())
-    .add_system_set(
-        SystemSet::on_update(AppState::Breakout)
-            .with_system(scoreboard_system.system())
-    )
-    .add_system_set(on_exit_system_set());
+pub fn add_breakout(app: &mut AppBuilder) {
+    app.insert_resource(Scoreboard { score: 0 })
+        .insert_resource(ClearColor(Color::rgb(0.9, 0.9, 0.9)))
+        .add_system_set(SystemSet::on_enter(AppState::Breakout).with_system(setup_scene.system()))
+        .add_system_set(timestep_system_set())
+        .add_system_set(
+            SystemSet::on_update(AppState::Breakout).with_system(scoreboard_system.system()),
+        )
+        .add_system_set(on_exit_system_set());
 }
 
 struct Paddle {
@@ -49,11 +41,11 @@ enum Collider {
 
 fn on_exit_system_set() -> SystemSet {
     SystemSet::on_exit(AppState::Breakout)
-    .with_system(game_state_teardown.system())
-    .with_system(reset_score.system())
+        .with_system(game_state_teardown.system())
+        .with_system(reset_score.system())
 }
 
-fn reset_score(mut scoreboard: ResMut<Scoreboard>){
+fn reset_score(mut scoreboard: ResMut<Scoreboard>) {
     scoreboard.score = 0
 }
 
@@ -63,7 +55,6 @@ fn reset_score(mut scoreboard: ResMut<Scoreboard>){
 //         commands.entity(entity).despawn_recursive();
 //     }
 // }
-
 
 fn setup_cameras(commands: &mut Commands) {
     // cameras
@@ -216,7 +207,7 @@ fn timestep_system_set() -> SystemSet {
                         ShouldRun::No
                     }
                 })
-                    .system(),
+                .system(),
             ),
         )
         // Wait for game to load

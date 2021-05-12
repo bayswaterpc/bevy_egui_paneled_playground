@@ -1,3 +1,4 @@
+use crate::app_state::{game_state_teardown, AppState, PX_SIZE_OF_LEFT_PANEL};
 use bevy::prelude::*;
 use rand::{prelude::SliceRandom, Rng};
 use std::{
@@ -5,24 +6,19 @@ use std::{
     io::{BufRead, BufReader},
     process::Stdio,
 };
-use crate::app_state::{game_state_teardown, AppState, PX_SIZE_OF_LEFT_PANEL};
 
-pub fn add_contributors_systems( app: &mut AppBuilder) {
-    app.add_system_set(
-        SystemSet::on_enter(AppState::Contributors)
-        .with_system(setup.system())
-    )
-    .add_system_set(
-        SystemSet::on_update(AppState::Contributors)
-        .with_system(velocity_system.system())
-        .with_system(move_system.system())
-        .with_system(collision_system.system())
-        .with_system(select_system.system())
-    )
-    .add_system_set(
-        SystemSet::on_exit(AppState::Contributors)
-        .with_system(game_state_teardown.system())
-    );
+pub fn add_contributors(app: &mut AppBuilder) {
+    app.add_system_set(SystemSet::on_enter(AppState::Contributors).with_system(setup.system()))
+        .add_system_set(
+            SystemSet::on_update(AppState::Contributors)
+                .with_system(velocity_system.system())
+                .with_system(move_system.system())
+                .with_system(collision_system.system())
+                .with_system(select_system.system()),
+        )
+        .add_system_set(
+            SystemSet::on_exit(AppState::Contributors).with_system(game_state_teardown.system()),
+        );
 }
 
 type Contributors = BTreeSet<String>;
