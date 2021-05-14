@@ -16,4 +16,4 @@ pub fn game_state_teardown(mut commands: Commands, entities: Query<Entity>) {
     }
 }
 
-pub const PX_SIZE_OF_LEFT_PANEL: f32 = 120.0;
+pub const PX_SIZE_OF_LEFT_PANEL: f32 = 110.0;

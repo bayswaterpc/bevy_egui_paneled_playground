@@ -7,7 +7,7 @@ use rand::prelude::random;
 
 const ARENA_HEIGHT: u32 = 10;
 const ARENA_WIDTH: u32 = 10;
-
+const SNAKE_LEFT_PANEL_CONTROL: f32 = PX_SIZE_OF_LEFT_PANEL - 40.0;
 #[derive(SystemLabel, Debug, Hash, PartialEq, Eq, Clone)]
 pub enum SnakeMovement {
     Input,
@@ -17,7 +17,7 @@ pub enum SnakeMovement {
 }
 
 #[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
-struct Position {
+struct GridPosition {
     x: i32,
     y: i32,
 }
@@ -48,7 +48,7 @@ struct GameOverEvent;
 struct GrowthEvent;
 
 #[derive(Default)]
-struct LastTailPosition(Option<Position>);
+struct LastTailPosition(Option<GridPosition>);
 
 struct SnakeSegment;
 #[derive(Default)]
@@ -103,13 +103,13 @@ fn spawn_snake(
                 direction: Direction::Up,
             })
             .insert(SnakeSegment)
-            .insert(Position { x: 3, y: 3 })
+            .insert(GridPosition { x: 3, y: 3 })
             .insert(Size::square(0.8))
             .id(),
         spawn_segment(
             commands,
             &materials.segment_material,
-            Position { x: 3, y: 2 },
+            GridPosition { x: 3, y: 2 },
         ),
     ];
 }
@@ -117,7 +117,7 @@ fn spawn_snake(
 fn spawn_segment(
     mut commands: Commands,
     material: &Handle<ColorMaterial>,
-    position: Position,
+    position: GridPosition,
 ) -> Entity {
     commands
         .spawn_bundle(SpriteBundle {
@@ -135,14 +135,14 @@ fn snake_movement(
     mut game_over_writer: EventWriter<GameOverEvent>,
     segments: ResMut<SnakeSegments>,
     mut heads: Query<(Entity, &SnakeHead)>,
-    mut positions: Query<&mut Position>,
+    mut positions: Query<&mut GridPosition>,
 ) {
     if let Some((head_entity, head)) = heads.iter_mut().next() {
         let segment_positions = segments
             .0
             .iter()
             .map(|e| *positions.get_mut(*e).unwrap())
-            .collect::<Vec<Position>>();
+            .collect::<Vec<GridPosition>>();
         let mut head_pos = positions.get_mut(head_entity).unwrap();
         match &head.direction {
             Direction::Left => {
@@ -216,8 +216,8 @@ fn game_over(
 fn snake_eating(
     mut commands: Commands,
     mut growth_writer: EventWriter<GrowthEvent>,
-    food_positions: Query<(Entity, &Position), With<Food>>,
-    head_positions: Query<&Position, With<SnakeHead>>,
+    food_positions: Query<(Entity, &GridPosition), With<Food>>,
+    head_positions: Query<&GridPosition, With<SnakeHead>>,
 ) {
     for head_pos in head_positions.iter() {
         for (ent, food_pos) in food_positions.iter() {
@@ -247,15 +247,21 @@ fn snake_growth(
 
 fn size_scaling(windows: Res<Windows>, mut q: Query<(&Size, &mut Sprite)>) {
     let window = windows.get_primary().unwrap();
+
     for (sprite_size, mut sprite) in q.iter_mut() {
+        // let x = sprite_size.width / ARENA_WIDTH as f32
+        //     * (window.width() as f32 - PX_SIZE_OF_LEFT_PANEL);
+        // let y = sprite_size.height / ARENA_HEIGHT as f32 * window.height() as f32;
+        //println!("x{:?} y{:?}", x, y);
         sprite.size = Vec2::new(
-            sprite_size.width / ARENA_WIDTH as f32 * window.width() as f32,
+            sprite_size.width / ARENA_WIDTH as f32
+                * (window.width() as f32 - PX_SIZE_OF_LEFT_PANEL),
             sprite_size.height / ARENA_HEIGHT as f32 * window.height() as f32,
         );
     }
 }
 
-fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Transform)>) {
+fn position_translation(windows: Res<Windows>, mut q: Query<(&GridPosition, &mut Transform)>) {
     fn convert(pos: f32, bound_window: f32, bound_game: f32) -> f32 {
         let tile_size = bound_window / bound_game;
         pos / bound_game * bound_window - (bound_window / 2.) + (tile_size / 2.)
@@ -263,7 +269,11 @@ fn position_translation(windows: Res<Windows>, mut q: Query<(&Position, &mut Tra
     let window = windows.get_primary().unwrap();
     for (pos, mut transform) in q.iter_mut() {
         transform.translation = Vec3::new(
-            convert(pos.x as f32, window.width() as f32, ARENA_WIDTH as f32),
+            convert(
+                pos.x as f32,
+                window.width() - PX_SIZE_OF_LEFT_PANEL as f32,
+                ARENA_WIDTH as f32,
+            ) + SNAKE_LEFT_PANEL_CONTROL,
             convert(pos.y as f32, window.height() as f32, ARENA_HEIGHT as f32),
             0.0,
         );
@@ -277,7 +287,7 @@ fn food_spawner(mut commands: Commands, materials: Res<Materials>) {
             ..Default::default()
         })
         .insert(Food)
-        .insert(Position {
+        .insert(GridPosition {
             x: (random::<f32>() * ARENA_WIDTH as f32) as i32,
             y: (random::<f32>() * ARENA_HEIGHT as f32) as i32,
         })
@@ -319,10 +329,8 @@ fn food_timestep_system_set() -> SystemSet {
             FixedTimestep::step(1.0 as f64).chain(
                 (|In(input): In<ShouldRun>, state: Res<State<AppState>>| {
                     if state.current() == &AppState::Snake {
-                        //println!("Snake food");
                         input
                     } else {
-                        //println!("Does it say no?");
                         ShouldRun::No
                     }
                 })
