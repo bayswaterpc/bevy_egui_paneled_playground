@@ -1,9 +1,9 @@
+use crate::app_state::{game_state_teardown, AppState, PX_SIZE_OF_LEFT_PANEL};
 use bevy::core::FixedTimestep;
+use bevy::ecs::schedule::ShouldRun;
 use bevy::prelude::*;
 use bevy::render::pass::ClearColor;
 use rand::prelude::random;
-use bevy::ecs::schedule::{ShouldRun};
-use crate::app_state::{game_state_teardown, AppState, PX_SIZE_OF_LEFT_PANEL};
 
 const ARENA_HEIGHT: u32 = 10;
 const ARENA_WIDTH: u32 = 10;
@@ -75,13 +75,16 @@ impl Direction {
     }
 }
 
-fn setup(mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+fn app_startup(mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
     commands.insert_resource(Materials {
         head_material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
         segment_material: materials.add(Color::rgb(0.3, 0.3, 0.3).into()),
         food_material: materials.add(Color::rgb(1.0, 0.0, 1.0).into()),
     });
+}
+
+fn snake_startup(mut commands: Commands) {
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }
 
 fn spawn_snake(
@@ -281,55 +284,6 @@ fn food_spawner(mut commands: Commands, materials: Res<Materials>) {
         .insert(Size::square(0.8));
 }
 
-fn _old_main() {
-    App::build()
-        .insert_resource(ClearColor(Color::rgb(0.04, 0.04, 0.04)))
-        .insert_resource(SnakeSegments::default())
-        .insert_resource(LastTailPosition::default())
-        .add_event::<GrowthEvent>()
-        .add_event::<GameOverEvent>()
-        .add_startup_system(setup.system())
-        .add_startup_stage("game_setup", SystemStage::single(spawn_snake.system()))
-        .add_system(
-            snake_movement_input
-                .system()
-                .label(SnakeMovement::Input)
-                .before(SnakeMovement::Movement),
-        )
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(0.150))
-                .with_system(snake_movement.system().label(SnakeMovement::Movement))
-                .with_system(
-                    snake_eating
-                        .system()
-                        .label(SnakeMovement::Eating)
-                        .after(SnakeMovement::Movement),
-                )
-                .with_system(
-                    snake_growth
-                        .system()
-                        .label(SnakeMovement::Growth)
-                        .after(SnakeMovement::Eating),
-                ),
-        )
-        .add_system(game_over.system().after(SnakeMovement::Movement))
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(1.0))
-                .with_system(food_spawner.system()),
-        )
-        .add_system_set_to_stage(
-            CoreStage::PostUpdate,
-            SystemSet::new()
-                .with_system(position_translation.system())
-                .with_system(size_scaling.system()),
-        )
-        .add_plugins(DefaultPlugins)
-        .run();
-}
-
-
 fn snake_timestep_system_set() -> SystemSet {
     SystemSet::new()
         .with_run_criteria(
@@ -341,7 +295,7 @@ fn snake_timestep_system_set() -> SystemSet {
                         ShouldRun::No
                     }
                 })
-                    .system(),
+                .system(),
             ),
         )
         .with_system(snake_movement.system().label(SnakeMovement::Movement))
@@ -359,15 +313,16 @@ fn snake_timestep_system_set() -> SystemSet {
         )
 }
 
-
 fn food_timestep_system_set() -> SystemSet {
     SystemSet::new()
         .with_run_criteria(
             FixedTimestep::step(1.0 as f64).chain(
                 (|In(input): In<ShouldRun>, state: Res<State<AppState>>| {
                     if state.current() == &AppState::Snake {
-                        ShouldRun::Yes
+                        //println!("Snake food");
+                        input
                     } else {
+                        //println!("Does it say no?");
                         ShouldRun::No
                     }
                 })
@@ -385,45 +340,39 @@ fn snake_state_shouldrun(state: Res<State<AppState>>) -> ShouldRun {
     }
 }
 
-//TODO figure this out
 //on_update may then be clashing
 fn post_update_system_set() -> SystemSet {
     SystemSet::new()
-    .with_run_criteria(snake_state_shouldrun.system())
-    .with_system(position_translation.system())
-    .with_system(size_scaling.system())
+        .with_run_criteria(snake_state_shouldrun.system())
+        .with_system(position_translation.system())
+        .with_system(size_scaling.system())
 }
 
 pub fn add_snake(app: &mut AppBuilder) {
-    App::build()
-        .insert_resource(SnakeSegments::default())
+    app.insert_resource(SnakeSegments::default())
         .insert_resource(LastTailPosition::default())
+        .add_startup_system(app_startup.system())
         .add_event::<GrowthEvent>()
         .add_event::<GameOverEvent>()
         .add_system_set(
             SystemSet::on_enter(AppState::Snake)
-            .with_system(setup.system())
-            .with_system(spawn_snake.system())
+                .with_system(snake_startup.system())
+                .with_system(spawn_snake.system()),
         )
         .add_system_set(
             SystemSet::on_update(AppState::Snake)
-            .with_system(snake_movement_input
-                .system()
-                .label(SnakeMovement::Input)
-                .before(SnakeMovement::Movement))
-            .with_system(game_over.system()
-            .after(SnakeMovement::Movement))
+                .with_system(
+                    snake_movement_input
+                        .system()
+                        .label(SnakeMovement::Input)
+                        .before(SnakeMovement::Movement),
+                )
+                .with_system(game_over.system().after(SnakeMovement::Movement)),
         )
         .add_system_set(snake_timestep_system_set())
         .add_system_set(food_timestep_system_set())
-        .add_system_set_to_stage(
-            CoreStage::PostUpdate,
-            post_update_system_set(),
-        )
+        .add_system_set_to_stage(CoreStage::PostUpdate, post_update_system_set())
         .add_system_set(
-            SystemSet::on_exit(AppState::Breakout)
-            .with_system(game_state_teardown.system())
+            SystemSet::on_exit(AppState::Snake).with_system(game_state_teardown.system()),
         );
-    
 }
-
