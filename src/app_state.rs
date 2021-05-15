@@ -3,7 +3,7 @@ use bevy::prelude::*;
 // Future Bevy releases shouldn't require such a strict order of operations.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum AppState {
-    CentralPanelState,
+    EguiCenter,
     Breakout,
     Contributors,
     Snake,

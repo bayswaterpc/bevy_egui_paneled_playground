@@ -13,3 +13,13 @@ edition = "2018"
 bevy = { version = "0.5" }
 bevy_egui="0.4.2"
 rand = "*"
+
+
+[lib]
+name = "egui_paneled_playground_lib"
+path = "src/lib.rs"
+
+
+[[bin]]
+name = "egui_paneled_playground_app"
+path = "src/main.rs"
