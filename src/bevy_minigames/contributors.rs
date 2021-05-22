@@ -1,3 +1,5 @@
+//Adapted from bevy crates example breakout game 
+// https://github.com/bevyengine/bevy/blob/main/examples/2d/contributors.rs
 use crate::app_state::{game_state_teardown, AppState, PX_SIZE_OF_LEFT_PANEL};
 use bevy::prelude::*;
 use rand::{prelude::SliceRandom, Rng};

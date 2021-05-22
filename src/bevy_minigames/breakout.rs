@@ -1,4 +1,5 @@
 //Adapted from bevy crates example breakout game
+// https://github.com/bevyengine/bevy/blob/main/examples/game/breakout.rs
 use crate::app_state::{game_state_teardown, AppState, PX_SIZE_OF_LEFT_PANEL};
 use bevy::ecs::schedule::ShouldRun;
 use bevy::{
