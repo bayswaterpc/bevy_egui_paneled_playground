@@ -1,3 +1,4 @@
+// Adapted from https://github.com/marcusbuffett/bevy_snake
 use crate::app_state::{game_state_teardown, AppState, PX_SIZE_OF_LEFT_PANEL};
 use bevy::core::FixedTimestep;
 use bevy::ecs::schedule::ShouldRun;
