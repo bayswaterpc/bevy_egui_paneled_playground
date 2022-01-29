@@ -20,7 +20,7 @@ fn egui_ui(
             match app_state.set(AppState::EguiCenter) {
                 Ok(_) => {}
                 Err(e) => {
-                    println!("{:?}", e)
+                    println!("State Error Egui {:?}", e)
                 }
             }
         }
@@ -28,7 +28,7 @@ fn egui_ui(
             match app_state.set(AppState::Breakout) {
                 Ok(_) => {}
                 Err(e) => {
-                    println!("{:?}", e)
+                    println!("State Error Breakout {:?}", e)
                 }
             }
         }
@@ -36,7 +36,7 @@ fn egui_ui(
             match app_state.set(AppState::Contributors) {
                 Ok(_) => {}
                 Err(e) => {
-                    println!("{:?}", e)
+                    println!("State Error Contributors {:?}", e)
                 }
             }
         }
@@ -44,7 +44,7 @@ fn egui_ui(
             match app_state.set(AppState::Snake) {
                 Ok(_) => {}
                 Err(e) => {
-                    println!("{:?}", e)
+                    println!("State Error Snake {:?}", e)
                 }
             }
         }
