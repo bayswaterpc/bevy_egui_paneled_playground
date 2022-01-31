@@ -9,10 +9,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-#bevy = { version = "0.6", features = ["dynamic"] } // requires .cargo/config_fast_builds to config.toml
 bevy = "0.6"
-bevy_egui="0.10"
-rand = "*"
+bevy_egui = "0.10.2"
+rand = "0.8.4"
+rand_xoshiro = "0.6.0"
 
 
 [lib]
